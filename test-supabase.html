@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-card h2 {
+            margin: 0 0 16px;
+            color: #333;
+            font-size: 18px;
+        }
+        .result {
+            background: #f8f9fa;
+            border-left: 4px solid #0ea5e9;
+            padding: 16px;
+            margin-top: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success { border-left-color: #10b981; background: #f0fdf4; }
+        .error { border-left-color: #ef4444; background: #fef2f2; }
+        .warning { border-left-color: #f59e0b; background: #fffbeb; }
+        button {
+            background: linear-gradient(110deg, #0ea5e9, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .info {
+            background: #e0f2fe;
+            border: 1px solid #0ea5e9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .info strong { color: #0369a1; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vyro POS - Supabase Connection Test</h1>
+    
+    <div class="info">
+        <strong>Instructions:</strong> Make sure your dev server is running (<code>npm run dev</code>) and you're logged into your store. Then click each test button below.
+    </div>
+
+    <div class="test-card">
+        <h2>Test 1: Check Supabase Client</h2>
+        <button onclick="test1()">Run Test 1</button>
+        <div id="result1" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Test 2: Check Session & Store ID</h2>
+        <button onclick="test2()">Run Test 2</button>
+        <div id="result2" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Test 3: Fetch Products from Supabase</h2>
+        <button onclick="test3()">Run Test 3</button>
+        <div id="result3" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Test 4: Check LocalStorage Data</h2>
+        <button onclick="test4()">Run Test 4</button>
+        <div id="result4" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Test 5: Try Manual Product Insert</h2>
+        <button onclick="test5()">Run Test 5</button>
+        <div id="result5" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Test 6: Migrate LocalStorage to Supabase</h2>
+        <p style="color: #666; font-size: 14px;">⚠️ Only run this if you have data in localStorage but not in Supabase</p>
+        <button onclick="test6()" style="background: linear-gradient(110deg, #10b981, #059669);">Migrate Data</button>
+        <div id="result6" class="result" style="display:none;"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const SUPABASE_URL = 'https://obxuguzpkktddzubqbpq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ieHVndXpwa2t0ZGR6dWJxYnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1MTA5MzcsImV4cCI6MjEwOTA4NjkzN30.YpGDgVQJ4iFwJ-tfVViXYAzGnIXeDAmW9eybdXgwsM8';
+
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function showResult(id, content, type = 'result') {
+            const el = document.getElementById(id);
+            el.style.display = 'block';
+            el.className = `result ${type}`;
+            el.textContent = content;
+        }
+
+        window.test1 = function() {
+            try {
+                const result = {
+                    'Supabase Client': typeof window.supabase,
+                    'Is Initialized': window.supabase ? '✅ Yes' : '❌ No',
+                    'URL': SUPABASE_URL
+                };
+                showResult('result1', JSON.stringify(result, null, 2), 'success');
+            } catch (err) {
+                showResult('result1', '❌ Error: ' + err.message, 'error');
+            }
+        };
+
+        window.test2 = function() {
+            try {
+                const sessString = localStorage.getItem('vyro-session');
+                if (!sessString) {
+                    showResult('result2', '❌ No session found!\n\n⚠️ Please login to your store first at http://localhost:5173', 'error');
+                    return;
+                }
+                const sess = JSON.parse(sessString);
+                const result = {
+                    'User ID': sess.userId,
+                    'User Name': sess.name,
+                    'Role': sess.role,
+                    'Store ID': sess.store_id,
+                    'Store Name': sess.storeName
+                };
+                showResult('result2', '✅ Session found:\n\n' + JSON.stringify(result, null, 2), 'success');
+            } catch (err) {
+                showResult('result2', '❌ Error: ' + err.message, 'error');
+            }
+        };
+
+        window.test3 = async function() {
+            try {
+                const sessString = localStorage.getItem('vyro-session');
+                if (!sessString) {
+                    showResult('result3', '❌ No session found! Please login first.', 'error');
+                    return;
+                }
+                const sess = JSON.parse(sessString);
+                
+                showResult('result3', '⏳ Fetching products from Supabase...', 'warning');
+                
+                const { data, error } = await window.supabase
+                    .from('products')
+                    .select('*')
+                    .eq('store_id', sess.store_id);
+                
+                if (error) {
+                    showResult('result3', `❌ Fetch failed!\n\nError: ${error.message}\nCode: ${error.code}\nDetails: ${error.details || 'None'}\nHint: ${error.hint || 'None'}`, 'error');
+                } else {
+                    showResult('result3', `✅ Fetch successful!\n\nProducts found: ${data.length}\n\n${data.length > 0 ? 'Sample:\n' + JSON.stringify(data[0], null, 2) : 'Table is empty'}`, data.length > 0 ? 'success' : 'warning');
+                }
+            } catch (err) {
+                showResult('result3', '❌ Error: ' + err.message, 'error');
+            }
+        };
+
+        window.test4 = function() {
+            try {
+                const sessString = localStorage.getItem('vyro-session');
+                if (!sessString) {
+                    showResult('result4', '❌ No session found!', 'error');
+                    return;
+                }
+                const sess = JSON.parse(sessString);
+                const storeId = sess.store_id;
+                
+                const products = JSON.parse(localStorage.getItem(`vyro-${storeId}-products`) || '[]');
+                const customers = JSON.parse(localStorage.getItem(`vyro-${storeId}-customers`) || '[]');
+                const sales = JSON.parse(localStorage.getItem(`vyro-${storeId}-sales`) || '[]');
+                const categories = JSON.parse(localStorage.getItem(`vyro-${storeId}-categories`) || '[]');
+                
+                const result = {
+                    'Products': products.length,
+                    'Customers': customers.length,
+                    'Sales': sales.length,
+                    'Categories': categories.length,
+                    'Sample Product': products[0] || 'None'
+                };
+                
+                showResult('result4', '📦 LocalStorage Data:\n\n' + JSON.stringify(result, null, 2), products.length > 0 ? 'success' : 'warning');
+            } catch (err) {
+                showResult('result4', '❌ Error: ' + err.message, 'error');
+            }
+        };
+
+        window.test5 = async function() {
+            try {
+                const sessString = localStorage.getItem('vyro-session');
+                if (!sessString) {
+                    showResult('result5', '❌ No session found!', 'error');
+                    return;
+                }
+                const sess = JSON.parse(sessString);
+                
+                const testProduct = {
+                    id: crypto.randomUUID(),
+                    store_id: sess.store_id,
+                    name: 'Test Product ' + Date.now(),
+                    price: 100,
+                    stock: 10,
+                    low_stock: 5,
+                    category: 'Test',
+                    barcode: '9999999999',
+                    icon: '🧪',
+                    brand: 'Test Brand'
+                };
+                
+                showResult('result5', '⏳ Inserting test product...', 'warning');
+                
+                const { data, error } = await window.supabase
+                    .from('products')
+                    .insert([testProduct])
+                    .select();
+                
+                if (error) {
+                    showResult('result5', `❌ Insert failed!\n\nError: ${error.message}\nCode: ${error.code}\nDetails: ${error.details || 'None'}\nHint: ${error.hint || 'None'}`, 'error');
+                } else {
+                    showResult('result5', `✅ Insert successful!\n\nProduct inserted:\n${JSON.stringify(data[0], null, 2)}`, 'success');
+                }
+            } catch (err) {
+                showResult('result5', '❌ Error: ' + err.message, 'error');
+            }
+        };
+
+        window.test6 = async function() {
+            try {
+                const sessString = localStorage.getItem('vyro-session');
+                if (!sessString) {
+                    showResult('result6', '❌ No session found!', 'error');
+                    return;
+                }
+                const sess = JSON.parse(sessString);
+                const storeId = sess.store_id;
+                
+                showResult('result6', '⏳ Starting migration...', 'warning');
+                
+                let results = [];
+                
+                // Migrate products
+                const products = JSON.parse(localStorage.getItem(`vyro-${storeId}-products`) || '[]');
+                if (products.length > 0) {
+                    results.push(`\n📦 Migrating ${products.length} products...`);
+                    const { data: prodData, error: prodError } = await window.supabase
+                        .from('products')
+                        .upsert(products.map(p => ({
+                            id: p.id,
+                            store_id: storeId,
+                            name: p.name,
+                            price: p.price,
+                            stock: p.stock || 0,
+                            low_stock: p.lowStock || p.low_stock || 5,
+                            category: p.category,
+                            brand: p.brand,
+                            barcode: p.barcode,
+                            icon: p.icon
+                        })));
+                    
+                    if (prodError) results.push(`❌ Products error: ${prodError.message}`);
+                    else results.push(`✅ Products migrated: ${products.length}`);
+                }
+                
+                // Migrate customers
+                const customers = JSON.parse(localStorage.getItem(`vyro-${storeId}-customers`) || '[]');
+                if (customers.length > 0) {
+                    results.push(`\n👥 Migrating ${customers.length} customers...`);
+                    const { data: custData, error: custError } = await window.supabase
+                        .from('customers')
+                        .upsert(customers.map(c => ({
+                            id: c.id,
+                            store_id: storeId,
+                            name: c.name,
+                            phone: c.phone,
+                            points: c.points || 0
+                        })));
+                    
+                    if (custError) results.push(`❌ Customers error: ${custError.message}`);
+                    else results.push(`✅ Customers migrated: ${customers.length}`);
+                }
+                
+                // Migrate sales
+                const sales = JSON.parse(localStorage.getItem(`vyro-${storeId}-sales`) || '[]');
+                if (sales.length > 0) {
+                    results.push(`\n💰 Migrating ${sales.length} sales...`);
+                    const { data: salesData, error: salesError } = await window.supabase
+                        .from('sales')
+                        .upsert(sales.map(s => ({
+                            id: s.id,
+                            store_id: storeId,
+                            cashier_id: s.cashierId,
+                            cashier_name: s.cashier,
+                            customer_name: s.customer,
+                            customer_id: s.customerId,
+                            method: s.method,
+                            subtotal: s.subtotal,
+                            discount: s.discount,
+                            tax: s.tax,
+                            total: s.total,
+                            items: s.items,
+                            loyalty_earned: s.loyaltyEarned || 0,
+                            sale_date: s.isoDate || new Date().toISOString().split('T')[0]
+                        })));
+                    
+                    if (salesError) results.push(`❌ Sales error: ${salesError.message}`);
+                    else results.push(`✅ Sales migrated: ${sales.length}`);
+                }
+                
+                if (results.length === 0) {
+                    showResult('result6', '⚠️ No data found in localStorage to migrate', 'warning');
+                } else {
+                    showResult('result6', '🎉 Migration complete!\n' + results.join('\n'), 'success');
+                }
+            } catch (err) {
+                showResult('result6', '❌ Error: ' + err.message + '\n\n' + err.stack, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

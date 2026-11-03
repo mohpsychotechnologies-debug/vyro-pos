@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Test - Vyro POS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    button {
+      padding: 18px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    button:active {
+      transform: scale(0.95);
+    }
+    
+    .success-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .success-btn:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    .error-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    }
+    
+    .error-btn:hover {
+      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    .info-box {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .info-box h3 {
+      color: #667eea;
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .info-box p {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      display: none;
+    }
+    
+    .status.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .icon {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔊 Audio Test</h1>
+    <p class="subtitle">Test the barcode scanner audio feedback for Vyro POS</p>
+    
+    <div class="info-box">
+      <h3>ℹ️ Instructions</h3>
+      <p>Click the buttons below to test the audio sounds. Make sure your device volume is turned up!</p>
+    </div>
+    
+    <div class="button-group">
+      <button class="success-btn" onclick="testSuccessBeep()">
+        <span class="icon">✅</span>
+        <span>Test Success Beep</span>
+      </button>
+      
+      <button class="error-btn" onclick="testErrorBeep()">
+        <span class="icon">❌</span>
+        <span>Test Error Beep</span>
+      </button>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    // Success beep function (high pitch, 1200Hz)
+    function playBeep() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 1200; // High pitch for success
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15);
+        
+        return true;
+      } catch (error) {
+        console.error('Audio beep failed:', error);
+        return false;
+      }
+    }
+
+    // Error beep function (low pitch, 400Hz)
+    function playErrorBeep() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 400; // Low pitch for error
+        oscillator.type = 'square';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+        
+        return true;
+      } catch (error) {
+        console.error('Audio error beep failed:', error);
+        return false;
+      }
+    }
+
+    // Test functions
+    function testSuccessBeep() {
+      const success = playBeep();
+      showStatus(success ? 'Success beep played! 🎵 (High pitch 1200Hz)' : 'Failed to play success beep ❌', success);
+    }
+
+    function testErrorBeep() {
+      const success = playErrorBeep();
+      showStatus(success ? 'Error beep played! 🔊 (Low pitch 400Hz)' : 'Failed to play error beep ❌', success);
+    }
+
+    function showStatus(message, isSuccess) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = 'status show ' + (isSuccess ? 'success' : 'error');
+      
+      setTimeout(() => {
+        statusEl.classList.remove('show');
+      }, 3000);
+    }
+
+    // Browser compatibility check
+    window.addEventListener('load', () => {
+      if (!window.AudioContext && !window.webkitAudioContext) {
+        showStatus('⚠️ Your browser does not support Web Audio API', false);
+      }
+    });
+  </script>
+</body>
+</html>
