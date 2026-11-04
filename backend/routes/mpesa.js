@@ -66,7 +66,8 @@ router.post('/stk-push', async (req, res) => {
       phoneNumber,
       amount,
       billRefNumber: billRefNumber || 'VYRO-POS',
-      callbackUrl: `${process.env.BACKEND_URL}/api/mpesa/callback/stk`
+      callbackUrl: `${process.env.BACKEND_URL}/api/pay/callback/stk`
+
     });
 
     console.log('STK Push response:', response);
@@ -319,8 +320,8 @@ router.post('/register-urls', async (req, res) => {
     const response = await mpesaService.registerUrls({
       accessToken,
       businessShortcode: credentials.business_shortcode,
-      confirmationUrl: `${process.env.BACKEND_URL}/api/mpesa/callback/c2b`,
-      validationUrl: `${process.env.BACKEND_URL}/api/mpesa/validation/c2b`
+      confirmationUrl: `${process.env.BACKEND_URL}/api/pay/callback/c2b`,
+      validationUrl: `${process.env.BACKEND_URL}/api/pay/validation/c2b`
     });
 
     console.log('URL registration response:', response);
