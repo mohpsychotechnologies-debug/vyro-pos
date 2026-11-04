@@ -168,8 +168,16 @@ async function registerUrls({
 
     return response.data;
   } catch (error) {
-    console.error('Register URLs error:', error.response?.data || error.message);
-    throw new Error('Failed to register callback URLs');
+    // Return full M-Pesa error for debugging
+    const mpesaError = error.response?.data;
+    console.error('Register URLs error:', JSON.stringify(mpesaError || error.message));
+    throw new Error(
+      mpesaError?.errorMessage || 
+      mpesaError?.ResponseDescription ||
+      mpesaError?.ResultDesc ||
+      JSON.stringify(mpesaError) ||
+      'Failed to register callback URLs'
+    );
   }
 }
 
