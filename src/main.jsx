@@ -2586,7 +2586,15 @@ function MpesaSettings({ storeId, notify }) {
   };
 
   const handleRegisterUrls = async () => {
-    if (!creds?.is_active) {
+    // Check storeId is available
+    if (!storeId) {
+      notify('⚠️ Store ID not found. Please re-login.');
+      return;
+    }
+
+    // Allow if we have creds saved OR if business_shortcode is filled
+    const hasCreds = creds?.is_active || form.businessShortcode;
+    if (!hasCreds) {
       notify('⚠️ Save your credentials first');
       return;
     }
@@ -2595,6 +2603,8 @@ function MpesaSettings({ storeId, notify }) {
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+      console.log('Registering callbacks:', { backendUrl, storeId });
+
       const response = await fetch(`${backendUrl}/api/mpesa/register-urls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2602,12 +2612,15 @@ function MpesaSettings({ storeId, notify }) {
       });
 
       const data = await response.json();
+      console.log('Register response:', data);
+
       if (data.success) {
         notify('✅ Callback URLs registered successfully!');
       } else {
         notify(`❌ ${data.error}`);
       }
     } catch (error) {
+      console.error('Register URLs error:', error);
       notify(`❌ Error: ${error.message}`);
     }
   };
@@ -2750,7 +2763,7 @@ function MpesaSettings({ storeId, notify }) {
             >
               {testing ? 'Testing...' : '🧪 Test'}
             </button>
-            {creds?.is_active && (
+            {(creds?.is_active || form.businessShortcode) && (
               <button
                 className="btn-view"
                 onClick={handleRegisterUrls}
@@ -2761,7 +2774,7 @@ function MpesaSettings({ storeId, notify }) {
             )}
           </div>
 
-          {creds?.is_active && (
+          {(creds?.is_active || form.businessShortcode) && (
             <div style={{marginTop:16,padding:12,background:'var(--green-lt)',borderRadius:8}}>
               <small style={{fontSize:12,color:'var(--green)'}}>
                 ✓ M-Pesa integration is active. Credentials are configured and ready to use.
