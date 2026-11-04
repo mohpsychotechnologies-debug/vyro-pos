@@ -151,7 +151,7 @@ async function registerUrls({
 }) {
   try {
     const response = await axios.post(
-      `${BASE_URL}/mpesa/c2b/v1/registerurl`,
+      `${BASE_URL}/mpesa/c2b/v2/registerurl`,
       {
         ShortCode: businessShortcode,
         ResponseType: 'Completed',
