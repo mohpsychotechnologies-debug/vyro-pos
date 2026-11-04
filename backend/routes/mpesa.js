@@ -27,9 +27,13 @@ router.post('/stk-push', async (req, res) => {
 
     console.log(`STK Push request for store ${storeId}: ${amount} to ${phoneNumber}`);
 
-    // Get store's M-Pesa credentials
+    // Get store's M-Pesa credentials directly (bypass RLS using service role)
     const { data: creds, error: credsError } = await supabase
-      .rpc('get_mpesa_credentials', { p_store_id: storeId });
+      .from('mpesa_credentials')
+      .select('consumer_key, consumer_secret, business_shortcode, account_type, passkey, is_active')
+      .eq('store_id', storeId)
+      .eq('is_active', true)
+      .single();
 
     if (credsError || !creds) {
       console.error('Credentials error:', credsError);
@@ -39,7 +43,7 @@ router.post('/stk-push', async (req, res) => {
       });
     }
 
-    const credentials = typeof creds === 'string' ? JSON.parse(creds) : creds;
+    const credentials = creds;
 
     if (!credentials.is_active) {
       return res.status(403).json({ 
@@ -106,11 +110,15 @@ router.post('/stk-query', async (req, res) => {
   try {
     const { storeId, checkoutRequestId } = req.body;
 
-    // Get store's M-Pesa credentials
-    const { data: creds } = await supabase
-      .rpc('get_mpesa_credentials', { p_store_id: storeId });
+    // Get store's M-Pesa credentials directly (bypass RLS using service role)
+    const { data: creds, error: credsError } = await supabase
+      .from('mpesa_credentials')
+      .select('consumer_key, consumer_secret, business_shortcode, account_type, passkey, is_active')
+      .eq('store_id', storeId)
+      .eq('is_active', true)
+      .single();
 
-    const credentials = typeof creds === 'string' ? JSON.parse(creds) : creds;
+    const credentials = creds;
 
     // Get access token
     const accessToken = await mpesaService.getAccessToken(
@@ -282,18 +290,24 @@ router.post('/register-urls', async (req, res) => {
   try {
     const { storeId } = req.body;
 
-    // Get store's M-Pesa credentials
-    const { data: creds } = await supabase
-      .rpc('get_mpesa_credentials', { p_store_id: storeId });
+    // Get store's M-Pesa credentials directly (bypass RLS using service role)
+    const { data: creds, error: credsError } = await supabase
+      .from('mpesa_credentials')
+      .select('consumer_key, consumer_secret, business_shortcode, account_type, passkey, is_active')
+      .eq('store_id', storeId)
+      .eq('is_active', true)
+      .single();
 
-    if (!creds) {
+    console.log('Credentials lookup:', { storeId, creds, credsError });
+
+    if (credsError || !creds) {
       return res.status(404).json({ 
         success: false,
-        error: 'M-Pesa credentials not found' 
+        error: 'M-Pesa credentials not found. Please save credentials first.'
       });
     }
 
-    const credentials = typeof creds === 'string' ? JSON.parse(creds) : creds;
+    const credentials = creds;
 
     // Get access token
     const accessToken = await mpesaService.getAccessToken(
