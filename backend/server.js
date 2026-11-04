@@ -29,7 +29,9 @@ app.get('/health', (req, res) => {
 });
 
 // M-Pesa routes
+app.use('/api/pay', mpesaRoutes);
 app.use('/api/mpesa', mpesaRoutes);
+
 
 // 404 handler
 app.use((req, res) => {
